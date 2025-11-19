@@ -88,6 +88,10 @@ class Build:
     def add_compile_option(self, option: str, privacy: Privacy = Privacy.PRIVATE, target: str | None = None):
         self._cmake.compile_options.append(CMakeCompileOption(option, privacy, target))
 
+    def add_compile_options(self, *option: str, privacy: Privacy = Privacy.PRIVATE, target: str | None = None):
+        for opt in option:
+            self.add_compile_option(opt, privacy, target)
+
     def add_cpm_dep(
         self,
         repo: str,
