@@ -114,19 +114,20 @@ class CMakeFile:
 
     def convert_path(self, path: Path) -> str:
         sfx = None
+        ret = ""
 
         if path.is_relative_to(self.config.build_dir):
             sfx = path.relative_to(self.config.build_dir)
-            return f"\"{sfx}\""
+            ret = f"\"{sfx}\""
         elif path.is_relative_to(self.config.project_dir):
             sfx = path.relative_to(self.config.project_dir)
-            return f"\"${{CMAKE_SOURCE_DIR}}/{sfx}\""
+            ret = f"\"${{CMAKE_SOURCE_DIR}}/{sfx}\""
         elif not path.is_absolute():
             sfx = self.config.project_dir / path
-            return f'"{sfx.absolute()}"'
+            ret = f'"{sfx.absolute()}"'
         else:
-            return f'"{path}"'
-
+            ret = f'"{path}"'
+        return ret.replace("\\", "/")
 
     def export_str(self) -> str:
         def get_target(t: str | None) -> str:
