@@ -190,16 +190,29 @@ class Build:
 
     # Auto update stuff
 
-    def get_last_gh_release(self, repo: str) -> str | None:
+    def _gh_request(self, url: str):
         assert requests
 
-        url = repo.replace(".git", "").replace("github.com", "api.github.com/repos") + "/tags"
-        r = requests.get(url)
+        headers = {}
+        # check for github token
+        gh_token = self.config.var("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN") or "").strip()
+        if gh_token:
+            headers["Authorization"] = f"Bearer {gh_token}"
+
+        r = requests.get(url, headers=headers)
+
         if not r.ok:
             print(f"Request for {url} failed: {r.status_code} {r.reason}")
             return None
 
-        tags = r.json()
+        return r.json()
+
+    def get_last_gh_release(self, repo: str) -> str | None:
+        assert requests
+
+        url = repo.replace(".git", "").replace("github.com", "api.github.com/repos") + "/tags"
+        tags = self._gh_request(url)
+
         if not isinstance(tags, list) or len(tags) == 0:
             print(f"No tags found for {repo}")
             return None
@@ -210,12 +223,8 @@ class Build:
         assert requests
 
         url = repo.replace(".git", "").replace("github.com", "api.github.com/repos") + "/commits"
-        r = requests.get(url)
-        if not r.ok:
-            print(f"Request for {url} failed: {r.status_code} {r.reason}")
-            return None
+        commits = self._gh_request(url)
 
-        commits = r.json()
         if not isinstance(commits, list) or len(commits) == 0:
             print(f"No commits found for {repo}")
             return None
