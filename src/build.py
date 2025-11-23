@@ -158,7 +158,7 @@ class Build:
             else:
                 msg += f"Geode nightly is required (at least commit {tag_or_commit}), run `geode sdk update nightly`\n"
 
-            msg += f"Current Geode commit: {tag_or_commit or 'unknown'}\n"
+            msg += f"Current Geode version: {self.config.get_sdk_commit_or_tag() or 'unknown'}\n"
 
             fatal_error(msg)
 

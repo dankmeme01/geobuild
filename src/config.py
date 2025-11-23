@@ -129,6 +129,15 @@ class Config:
             return None
         return output
 
+    def get_sdk_commit_or_tag(self) -> str | None:
+        # check if we are on a tag
+        code, output = self.invoke_git(self.geode_sdk_path, "describe", "--tags", "--exact-match")
+
+        if code == 0 and output:
+            return output
+
+        return self.get_sdk_commit()
+
     def get_mod_commit(self) -> str | None:
         code, output = self.invoke_git(self.project_dir, "rev-parse", "HEAD")
 
