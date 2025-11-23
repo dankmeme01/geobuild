@@ -179,7 +179,7 @@ class CMakeFile:
             out += f"list(APPEND SOURCES ${{{name}}})\n"
 
         for path in self.source_files:
-            out += f"list(APPEND SOURCES \"{self.convert_path(path)}\")\n"
+            out += f"list(APPEND SOURCES {self.convert_path(path)})\n"
 
         # Add library
         out += f"\nadd_library({self.config.project_name} SHARED ${{SOURCES}})\n"
