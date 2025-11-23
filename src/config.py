@@ -127,7 +127,13 @@ class Config:
         if code != 0:
             # fatal_error(f"Failed to get Geode SDK commit:\n{output}")
             return None
+        return output
 
+    def get_mod_commit(self) -> str | None:
+        code, output = self.invoke_git(self.project_dir, "rev-parse", "HEAD")
+
+        if code != 0:
+            return None
         return output
 
     def host_desc(self) -> str:
