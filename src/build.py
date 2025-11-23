@@ -237,7 +237,9 @@ class Build:
 
         threads = []
 
-        def do_fetch(dep: CPMDep, use_tag: bool):
+        def do_fetch(dep: CPMDep):
+            use_tag = '.' in dep.tag or 'v' in dep.tag
+
             if use_tag:
                 tag = self.get_last_gh_release(dep.repo)
                 if not tag:
@@ -261,9 +263,11 @@ class Build:
                 print(f"{dep.name} is up to date ({latest})")
 
         for dep in self._cmake.deps:
-            use_tag = '.' in dep.tag or 'v' in dep.tag
+            threads.append(Thread(target=do_fetch, args=(dep,)))
 
-            threads.append(Thread(target=do_fetch, args=(dep, use_tag)))
+        # check for a geobuild update, for this we have to find what version of geobuild the user has right now
+        if dep := self._make_self_dependency():
+            threads.append(Thread(target=do_fetch, args=(dep,)))
 
         [t.start() for t in threads]
         [t.join() for t in threads]
@@ -271,3 +275,26 @@ class Build:
         print(f"Update check complete in {time.time() - start_time:.3f}s")
 
         return True
+
+    def _make_self_dependency(self) -> CPMDep | None:
+        cmake = (self.config.project_dir / "CMakeLists.txt").read_text()
+
+        version = None
+
+        if "dankmeme01/geobuild" in cmake:
+            remainder = cmake[cmake.index("dankmeme01/geobuild") + len("dankmeme01/geobuild") + 1:]
+            ver = remainder.partition('"')[0]
+            if ver:
+                version = ver.strip()
+
+        if not version:
+            return None
+
+        return CPMDep(
+            "geobuild",
+            "https://github.com/dankmeme01/geobuild",
+            version,
+            {},
+            Privacy.PRIVATE,
+        )
+
