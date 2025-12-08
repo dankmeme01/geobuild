@@ -30,7 +30,7 @@ class Platform(Enum):
         match self:
             case Platform.Windows:
                 out = "windows"
-            case Platform.Android32, Platform.Android64:
+            case Platform.Android32 | Platform.Android64:
                 out = "android"
             case Platform.Mac:
                 out = "macos"
