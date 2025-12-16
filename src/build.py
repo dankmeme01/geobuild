@@ -1,5 +1,6 @@
 from pathlib import Path
 from threading import Thread
+from hashlib import sha256
 import time
 import json
 import os
@@ -135,9 +136,21 @@ class Build:
         else:
             path = self._to_path(template)
             self.mod_json = json.loads(path.read_text())
+            self.reconfigure_if_changed(path)
 
         if not self.mod_json:
             fatal_error("Mod JSON template is empty")
+
+    def reconfigure_if_changed(self, path: Path | str):
+        path = self._to_path(path)
+        uid = sha256(str(path).encode()).hexdigest()[:16]
+        dest_path = self.config._geobuild_build_dir / f"_geobuild-reconfigure-{uid}"
+
+        self._cmake.configures.add(CMakeConfigure(
+            path=path,
+            dest_path=dest_path,
+            copyonly=True
+        ))
 
     def add_geode_dep(self, mod_id: str, version_or_spec: str | dict):
         if not self.mod_json:

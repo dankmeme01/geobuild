@@ -13,6 +13,7 @@ __all__ = [
     "CMakeCompileOption",
     "CMakeCacheVariable",
     "CMakeOption",
+    "CMakeConfigure",
     "CMakeFile",
     "CPMDep",
     "truthy",
@@ -71,6 +72,12 @@ class CMakeOption:
     default: bool
     desc: str
 
+@dataclass(frozen=True, unsafe_hash=True)
+class CMakeConfigure:
+    path: Path
+    dest_path: Path
+    copyonly: bool
+
 def truthy(val: str) -> bool:
     return val.lower() in ("1", "true", "yes", "on", "y")
 
@@ -87,6 +94,7 @@ class CMakeFile:
     defs: dict[str, CMakeDefinition]     = field(default_factory=dict)
     messages: list[str]                  = field(default_factory=list)
     raw_statements: list[str]            = field(default_factory=list)
+    configures: set[CMakeConfigure]      = field(default_factory=set)
 
     libraries: list[CMakeLibrary]        = field(default_factory=list)
     include_dirs: list[CMakeIncludeDir]  = field(default_factory=list)
@@ -157,6 +165,13 @@ class CMakeFile:
         # Messages
         for message in self.messages:
             out += f'message(STATUS "{message}")\n'
+
+        # Configures
+        for conf in self.configures:
+            out += f'configure_file({self.convert_path(conf.path)} {self.convert_path(conf.dest_path)}'
+            if conf.copyonly:
+                out += " COPYONLY"
+            out += ")\n"
 
         # Sources
         out += "\n\n# Source files\n"

@@ -68,6 +68,10 @@ class Config:
         return Path(self.var_require("CMAKE_BINARY_DIR"))
 
     @property
+    def _geobuild_build_dir(self) -> Path:
+        return Path(self.var_require("CMAKE_CURRENT_BINARY_DIR"))
+
+    @property
     def compiler_id(self) -> str:
         return self.var_require("CMAKE_CXX_COMPILER_ID")
 
