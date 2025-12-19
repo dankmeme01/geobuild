@@ -143,6 +143,9 @@ class Build:
 
     def reconfigure_if_changed(self, path: Path | str):
         path = self._to_path(path)
+        if not path.exists():
+            return
+
         uid = sha256(str(path).encode()).hexdigest()[:16]
         dest_path = self.config._geobuild_build_dir / f"_geobuild-reconfigure-{uid}"
 
