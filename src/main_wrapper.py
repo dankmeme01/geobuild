@@ -17,7 +17,7 @@ def handle_fatal_exc(msg: str):
     print(f"!! Build halted due to error:")
     for line in msg.splitlines():
         print(f"!! {line}")
-    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", flush=True)
     exit(1)
 
 def main():
@@ -56,6 +56,6 @@ if __name__ == "__main__":
         handle_fatal_exc(str(e))
     except Exception as e:
         # print the full trace
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stdout)
 
         handle_fatal_exc(f"Unhandled exception: {str(e)}")
