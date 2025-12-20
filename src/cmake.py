@@ -13,6 +13,7 @@ __all__ = [
     "CMakeCompileOption",
     "CMakeCacheVariable",
     "CMakeOption",
+    "CMakePCH",
     "CMakeConfigure",
     "CMakeFile",
     "CPMDep",
@@ -72,6 +73,12 @@ class CMakeOption:
     default: bool
     desc: str
 
+@dataclass(frozen=True)
+class CMakePCH:
+    headers: list[Path | str]
+    privacy: Privacy
+    target: str | None
+
 @dataclass(frozen=True, unsafe_hash=True)
 class CMakeConfigure:
     path: Path
@@ -101,6 +108,7 @@ class CMakeFile:
 
     glob_dirs: set[tuple[Path, bool]]    = field(default_factory=set)
     source_files: set[Path]              = field(default_factory=set)
+    pch: list[CMakePCH]                  = field(default_factory=list)
 
     deps: list[CPMDep]                   = field(default_factory=list)
     compile_options: list[CMakeCompileOption] = field(default_factory=list)
@@ -136,6 +144,13 @@ class CMakeFile:
         else:
             ret = f'"{path}"'
         return ret.replace("\\", "/")
+
+    def convert_header(self, hdr: Path | str) -> str:
+        # is this an stl header?
+        if isinstance(hdr, str) and hdr.startswith("<") and hdr.endswith(">"):
+            return hdr
+
+        return self.convert_path(Path(hdr))
 
     def export_str(self) -> str:
         def get_target(t: str | None) -> str:
@@ -228,6 +243,12 @@ class CMakeFile:
         out += "\n# Compile options\n"
         for opt in self.compile_options:
             out += f"target_compile_options({get_target(opt.target)} {opt.privacy.name} \"{opt.option}\")\n"
+
+        # Precompile headers
+        out += "\n# Precompiled headers\n"
+        for pch in self.pch:
+            headers_str = ' '.join([f'{self.convert_header(hdr)}' for hdr in pch.headers])
+            out += f"target_precompile_headers({get_target(pch.target)} {pch.privacy.name} {headers_str})\n"
 
         # Links
         out += "\n# Linked libraries\n"

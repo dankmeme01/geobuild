@@ -93,6 +93,9 @@ class Build:
         for opt in option:
             self.add_compile_option(opt, privacy, target)
 
+    def add_precompile_headers(self, *headers: Path | str, privacy: Privacy = Privacy.PRIVATE, target: str | None = None):
+        self._cmake.pch.append(CMakePCH(list(headers), privacy, target))
+
     def add_cpm_dep(
         self,
         repo: str,
