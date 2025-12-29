@@ -73,6 +73,9 @@ class Build:
                 raise FileNotFoundError(f"Source directory {path.parent} does not exist")
 
             self._cmake.glob_dirs.add((path, recursive))
+            if path.name.endswith(('.mm', '.m')):
+                for source_file in path.parent.glob(path.name):
+                    self._cmake.raw_statements.append(f"set_source_files_properties({source_file} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)")
         else:
             self.add_source_dir(path / "*.c", recursive)
             self.add_source_dir(path / "*.cpp", recursive)
