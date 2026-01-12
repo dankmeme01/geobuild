@@ -11,6 +11,7 @@ __all__ = [
     "CMakeLibrary",
     "CMakeIncludeDir",
     "CMakeCompileOption",
+    "CMakeLinkOption",
     "CMakeCacheVariable",
     "CMakeOption",
     "CMakePCH",
@@ -55,6 +56,12 @@ class CMakeIncludeDir:
 
 @dataclass(frozen=True)
 class CMakeCompileOption:
+    option: str
+    privacy: Privacy
+    target: str | None
+
+@dataclass(frozen=True)
+class CMakeLinkOption:
     option: str
     privacy: Privacy
     target: str | None
@@ -112,6 +119,7 @@ class CMakeFile:
 
     deps: list[CPMDep]                   = field(default_factory=list)
     compile_options: list[CMakeCompileOption] = field(default_factory=list)
+    link_options: list[CMakeLinkOption]       = field(default_factory=list)
 
     # def __init__(self, path: Path) -> None:
     #     self.path = path

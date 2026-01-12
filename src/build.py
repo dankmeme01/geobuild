@@ -96,6 +96,13 @@ class Build:
         for opt in option:
             self.add_compile_option(opt, privacy, target)
 
+    def add_link_option(self, option: str, privacy: Privacy = Privacy.PRIVATE, target: str | None = None):
+        self._cmake.link_options.append(CMakeLinkOption(option, privacy, target))
+
+    def add_link_options(self, *option: str, privacy: Privacy = Privacy.PRIVATE, target: str | None = None):
+        for opt in option:
+            self.add_link_option(opt, privacy, target)
+
     def add_precompile_headers(self, *headers: Path | str, privacy: Privacy = Privacy.PRIVATE, target: str | None = None):
         self._cmake.pch.append(CMakePCH(list(headers), privacy, target))
 
