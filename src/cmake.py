@@ -252,6 +252,11 @@ class CMakeFile:
         for opt in self.compile_options:
             out += f"target_compile_options({get_target(opt.target)} {opt.privacy.name} \"{opt.option}\")\n"
 
+        # Link options
+        out += "\n# Link options\n"
+        for opt in self.link_options:
+            out += f"target_link_options({get_target(opt.target)} {opt.privacy.name} \"{opt.option}\")\n"
+
         # Precompile headers
         out += "\n# Precompiled headers\n"
         for pch in self.pch:
