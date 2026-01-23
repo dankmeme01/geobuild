@@ -154,6 +154,16 @@ class Build:
         if not self.mod_json:
             fatal_error("Mod JSON template is empty")
 
+    def relax_geode_requirement(self):
+        if not self.mod_json:
+            fatal_error("Cannot call relax_geode_requirement when before enabling mod.json generation")
+
+        # get the current sdk version
+        if sdk_version := self.config.get_sdk_version():
+            self.mod_json["geode"] = sdk_version
+        else:
+            print("!! Failed to determine Geode version, cannot relax Geode requirement !!")
+
     def reconfigure_if_changed(self, path: Path | str):
         path = self._to_path(path)
         if not path.exists():
@@ -187,7 +197,7 @@ class Build:
             else:
                 msg += f"Geode nightly is required (at least commit {tag_or_commit}), run `geode sdk update nightly`\n"
 
-            msg += f"Current Geode version: {self.config.get_sdk_commit_or_tag() or 'unknown'}\n"
+            msg += f"Current Geode version: {self.config.get_sdk_version()} (tag: {self.config.get_sdk_commit_or_tag() or 'unknown'})\n"
 
             fatal_error(msg)
 

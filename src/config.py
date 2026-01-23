@@ -142,6 +142,14 @@ class Config:
 
         return self.get_sdk_commit()
 
+    def get_sdk_version(self) -> str | None:
+        # unlike the funcs below that check for git tags, we determine version by the VERSION file
+        version_file = self.geode_sdk_path / "VERSION"
+        if not version_file.exists():
+            return None
+
+        return version_file.read_text().strip()
+
     def get_mod_commit(self) -> str | None:
         code, output = self.invoke_git(self.project_dir, "rev-parse", "HEAD")
 
