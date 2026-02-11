@@ -16,6 +16,7 @@ __all__ = [
     "CMakeOption",
     "CMakePCH",
     "CMakeConfigure",
+    "CMakeUnityOptions",
     "CMakeFile",
     "CPMDep",
     "truthy",
@@ -92,6 +93,15 @@ class CMakeConfigure:
     dest_path: Path
     copyonly: bool
 
+@dataclass
+class CMakeUnityOptions:
+    batch_size: int
+    id_macro: str
+
+    @classmethod
+    def default(cls) -> CMakeUnityOptions:
+        return cls(batch_size=32, id_macro="")
+
 def truthy(val: str) -> bool:
     return val.lower() in ("1", "true", "yes", "on", "y")
 
@@ -120,6 +130,8 @@ class CMakeFile:
     deps: list[CPMDep]                   = field(default_factory=list)
     compile_options: list[CMakeCompileOption] = field(default_factory=list)
     link_options: list[CMakeLinkOption]       = field(default_factory=list)
+
+    unity_opts: CMakeUnityOptions | None = None
 
     # def __init__(self, path: Path) -> None:
     #     self.path = path
@@ -213,15 +225,32 @@ class CMakeFile:
             glob_type = "GLOB_RECURSE" if recursive else "GLOB"
             out += f"file({glob_type} {name} CONFIGURE_DEPENDS {converted})\n"
 
+            # skip unity and pch if this is .m/.mm
+            if path.name.endswith(('.mm', '.m')):
+                out += f"set_source_files_properties(${{{name}}} PROPERTIES SKIP_PRECOMPILE_HEADERS ON SKIP_UNITY_BUILD_INCLUSION ON)\n"
+
         for name in source_var_names:
             out += f"list(APPEND SOURCES ${{{name}}})\n"
 
         for path in self.source_files:
-            out += f"list(APPEND SOURCES {self.convert_path(path)})\n"
+            p = self.convert_path(path)
+            out += f"list(APPEND SOURCES {p})\n"
+            # skip unity and pch
+            if path.name.endswith(('.mm', '.m')):
+                out += f"set_source_files_properties({p} PROPERTIES SKIP_PRECOMPILE_HEADERS ON SKIP_UNITY_BUILD_INCLUSION ON)\n"
 
         # Add library
         out += f"\nadd_library({self.config.project_name} SHARED ${{SOURCES}})\n"
         out += f"set(_geobuild_project_name {self.config.project_name})\n"
+
+        # apply unity if enabled
+        if self.unity_opts is not None:
+            out += f"set_target_properties({self.config.project_name} PROPERTIES UNITY_BUILD ON "
+            if self.unity_opts.batch_size > 0:
+                out += f"UNITY_BUILD_BATCH_SIZE {self.unity_opts.batch_size} "
+            if self.unity_opts.id_macro:
+                out += f"UNITY_BUILD_ID_MACRO \"{self.unity_opts.id_macro}\" "
+            out += ")\n"
 
         # CPM deps
         out += "\n# CPM Dependencies\n"

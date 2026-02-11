@@ -73,9 +73,6 @@ class Build:
                 raise FileNotFoundError(f"Source directory {path.parent} does not exist")
 
             self._cmake.glob_dirs.add((path, recursive))
-            if path.name.endswith(('.mm', '.m')):
-                for source_file in path.parent.glob(path.name):
-                    self._cmake.raw_statements.append(f"set_source_files_properties({source_file} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)")
         else:
             self.add_source_dir(path / "*.c", recursive)
             self.add_source_dir(path / "*.cpp", recursive)
@@ -138,6 +135,11 @@ class Build:
 
     def enable_lto(self):
         self.set_variable("CMAKE_INTERPROCEDURAL_OPTIMIZATION", "ON")
+
+    def enable_unity(self, opts: CMakeUnityOptions | None = None):
+        if opts is None:
+            opts = CMakeUnityOptions.default()
+        self._cmake.unity_opts = opts
 
     def silence_warnings_for(self, lib: str):
         opt = "/w" if self.config.is_clang_cl else "-w"
