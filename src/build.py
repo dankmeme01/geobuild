@@ -272,6 +272,34 @@ class Build:
 
         return commits[0]["sha"]
 
+    def get_latest_geode_release(self, gd_ver: str) -> str | None:
+        assert requests
+
+        url = f"https://api.geode-sdk.org/v1/loader/versions/latest?gd={gd_ver}"
+        r = requests.get(url)
+        r.raise_for_status()
+        data = r.json()
+
+        try:
+            return data["payload"]["version"]
+        except (KeyError, TypeError):
+            print(f"Unexpected response when fetching '{url}': {data}")
+            return None
+
+    def get_last_geode_mod_release(self, mod_id: str) -> str | None:
+        assert requests
+
+        url = f"https://api.geode-sdk.org/v1/mods/{mod_id}/versions?per_page=1"
+        r = requests.get(url)
+        r.raise_for_status()
+        data = r.json()
+
+        try:
+            return data["payload"]["data"][0]["version"]
+        except (KeyError, TypeError):
+            print(f"Unexpected response when fetching '{url}': {data}")
+            return None
+
     def check_for_updates(self) -> bool:
         if not requests:
             print("WARN: requests module not found, cannot check for updates.")
@@ -312,12 +340,56 @@ class Build:
             else:
                 print(f"{dep.name} is up to date ({latest})")
 
+        def do_fetch_geode(geode_ver: str, gd_ver: str):
+            latest = self.get_latest_geode_release(gd_ver)
+            if latest is None: return
+
+            if geode_ver != latest:
+                print(f"Update available for Geode: {geode_ver} -> {latest}")
+            else:
+                print(f"Geode is up to date ({latest})")
+
+        def do_fetch_mod(id: str, spec: str | dict):
+            latest = self.get_last_geode_mod_release(id)
+            if latest is None: return
+
+            if isinstance(spec, str):
+                current = spec
+            elif isinstance(spec, dict) and "version" in spec:
+                current = spec["version"]
+            else:
+                print(f"Invalid spec for mod {id}, expected string or dict with 'version' key")
+                return
+
+            stripped = current.lstrip("^~<>=v")
+
+            if stripped != latest:
+                print(f"Update available for dependency '{id}': {stripped} -> {latest}")
+            else:
+                print(f"Mod '{id}' is up to date ({latest})")
+
         for dep in self._cmake.deps:
             threads.append(Thread(target=do_fetch, args=(dep,)))
 
         # check for a geobuild update, for this we have to find what version of geobuild the user has right now
         if dep := self._make_self_dependency():
             threads.append(Thread(target=do_fetch, args=(dep,)))
+
+        # check for geode and for geode dep updates
+        if self.mod_json:
+            gd = self.mod_json["gd"]
+            geode = self.mod_json["geode"].lstrip('v')
+            gd_ver = ""
+            for v in gd.values():
+                gd_ver = v
+                break
+
+            if gd_ver:
+                threads.append(Thread(target=do_fetch_geode, args=(geode, gd_ver)))
+
+        if self.mod_json and 'dependencies' in self.mod_json:
+            for id, spec in self.mod_json["dependencies"].items():
+                threads.append(Thread(target=do_fetch_mod, args=(id, spec)))
 
         [t.start() for t in threads]
         [t.join() for t in threads]
