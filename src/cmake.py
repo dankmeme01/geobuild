@@ -88,7 +88,7 @@ class CMakePCH:
     privacy: Privacy
     target: str | None
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass(frozen=True, unsafe_hash=True, order=True)
 class CMakeConfigure:
     path: Path
     dest_path: Path
@@ -118,6 +118,7 @@ class CMakeFile:
     options: list[CMakeOption]           = field(default_factory=list)
     defs: dict[str, CMakeDefinition]     = field(default_factory=dict)
     messages: list[str]                  = field(default_factory=list)
+    early_raw_statements: list[str]      = field(default_factory=list)
     raw_statements: list[str]            = field(default_factory=list)
     configures: set[CMakeConfigure]      = field(default_factory=set)
 
@@ -198,12 +199,17 @@ class CMakeFile:
 
             out += f'set({key} "{cvar.value}" {cache_str.strip()})\n'
 
+        # Early raw statements
+        out += "\n# Early Raw statements\n"
+        for statement in self.early_raw_statements:
+            out += f"{statement}\n"
+
         # Messages
         for message in self.messages:
             out += f'message(STATUS "{message}")\n'
 
         # Configures
-        for conf in self.configures:
+        for conf in sorted(list(self.configures)):
             out += f'configure_file({self.convert_path(conf.path)} {self.convert_path(conf.dest_path)}'
             if conf.copyonly:
                 out += " COPYONLY"
@@ -215,7 +221,7 @@ class CMakeFile:
 
         source_var_names = []
 
-        for path, recursive in self.glob_dirs:
+        for path, recursive in sorted(list(self.glob_dirs)):
             converted = self.convert_path(path)
             hashed = hashlib.sha256(converted.encode()).hexdigest()[:16]
 
@@ -233,7 +239,7 @@ class CMakeFile:
         for name in source_var_names:
             out += f"list(APPEND SOURCES ${{{name}}})\n"
 
-        for path in self.source_files:
+        for path in sorted(list(self.source_files)):
             p = self.convert_path(path)
             out += f"list(APPEND SOURCES {p})\n"
             # skip unity and pch

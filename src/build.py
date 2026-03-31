@@ -130,11 +130,28 @@ class Build:
         self._cmake.deps.append(CPMDep(name, repo, tag, options, privacy))
         self.link_library(link_name or name, privacy)
 
-    def add_raw_statement(self, statement: str):
-        self._cmake.raw_statements.append(statement)
+    def add_raw_statement(self, statement: str, early: bool = False):
+        if early:
+            self._cmake.early_raw_statements.append(statement)
+        else:
+            self._cmake.raw_statements.append(statement)
 
+    # This function does more than actually just enable LTO, it does more things to reduce binary size that are generally wanted in Release.
+    # 1. Enable LTO for all targets via CMAKE_INTERPROCEDURAL_OPTIMIZATION
+    # 2. Add -ffunction-sections and -fdata-sections
+    # 3. Add -Wl,--gc-sections (or -Wl,-dead_strip on Apple)
     def enable_lto(self):
         self.set_variable("CMAKE_INTERPROCEDURAL_OPTIMIZATION", "ON")
+
+        if self.config.is_clang:
+            strip_arg = "--gc-sections" if not self.platform.is_apple() else "-dead_strip"
+            cc_args = "-ffunction-sections -fdata-sections"
+
+            self._cmake.early_raw_statements.extend((
+                f"set(CMAKE_CXX_FLAGS \"${{CMAKE_CXX_FLAGS}} {cc_args}\")",
+                f"set(CMAKE_C_FLAGS \"${{CMAKE_C_FLAGS}} {cc_args}\")",
+                f"set(CMAKE_SHARED_LINKER_FLAGS \"${{CMAKE_SHARED_LINKER_FLAGS}} -Wl,{strip_arg}\")",
+            ))
 
     def enable_unity(self, opts: CMakeUnityOptions | None = None):
         if opts is None:
