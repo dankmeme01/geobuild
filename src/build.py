@@ -214,7 +214,7 @@ class Build:
         for file in Path(self.config.project_dir).glob(glob):
             if not file.is_file():
                 continue
-            files.append(str(file))
+            files.append(str(file.relative_to(self.config.project_dir)))
 
         self.mod_json["api"] = { "include": files }
 
