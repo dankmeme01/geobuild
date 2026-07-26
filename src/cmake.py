@@ -156,7 +156,7 @@ class CMakeFile:
 
         if path.is_relative_to(self.config.build_dir):
             sfx = path.relative_to(self.config.build_dir)
-            ret = f"\"{sfx}\""
+            ret = f"\"${{CMAKE_BINARY_DIR}}/{sfx}\""
         elif path.is_relative_to(self.config.project_dir):
             sfx = path.relative_to(self.config.project_dir)
             ret = f"\"${{CMAKE_SOURCE_DIR}}/{sfx}\""

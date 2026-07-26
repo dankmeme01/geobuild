@@ -206,6 +206,18 @@ class Build:
 
         deps[mod_id] = version_or_spec
 
+    def add_api_headers(self, glob: str):
+        """Adds API headers to the api key in mod.json"""
+        assert self.mod_json
+
+        files = []
+        for file in Path(self.config.project_dir).glob(glob):
+            if not file.is_file():
+                continue
+            files.append(file)
+
+        self.mod_json["api"] = { "include": files }
+
     def verify_sdk_at_least(self, tag_or_commit: str):
         """Verifies that the installed Geode SDK is newer or equal to the given tag or commit hash."""
 
