@@ -306,6 +306,9 @@ class Build:
 
         url = f"https://api.geode-sdk.org/v1/loader/versions/latest?gd={gd_ver}"
         r = requests.get(url)
+        if r.status_code == 404:
+            return None
+
         r.raise_for_status()
         data = r.json()
 
@@ -322,9 +325,12 @@ class Build:
         r = requests.get(url)
         r.raise_for_status()
         data = r.json()
+        versions = data["payload"]["data"]
+        if not versions:
+            return None
 
         try:
-            return data["payload"]["data"][0]["version"]
+            return versions[0]["version"]
         except (KeyError, TypeError):
             print(f"Unexpected response when fetching '{url}': {data}")
             return None

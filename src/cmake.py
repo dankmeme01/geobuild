@@ -266,6 +266,7 @@ class CMakeFile:
             out += f'    NAME {dep.name}\n'
             out += f'    GIT_REPOSITORY "{dep.repo}"\n'
             out += f'    GIT_TAG "{dep.tag}"\n'
+            out += f'    EXCLUDE_FROM_ALL ON'
             if len(dep.options) > 0:
                 out += f'    OPTIONS '
                 for (opt_key, opt_value) in dep.options.items():
