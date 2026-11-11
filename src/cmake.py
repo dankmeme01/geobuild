@@ -325,7 +325,9 @@ class CMakeFile:
                 "-m",
                 "geobuild._hook_runner",
                 "post_build",
-                str(self.config.project_dir)
+                str(self.config.project_dir),
+                str(self.config.build_dir),
+                self.config.platform.platform_str(True)
             ])
             geobuild_root = Path(__file__).parent.parent
             dir = self.convert_path(geobuild_root)

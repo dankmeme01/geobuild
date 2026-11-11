@@ -1,6 +1,7 @@
 from pathlib import Path
 from threading import Thread
 from hashlib import sha256
+from dataclasses import dataclass
 import time
 import json
 import os
@@ -459,3 +460,9 @@ class Build:
             Privacy.PRIVATE,
         )
 
+# slimmer version of Build for hooks
+@dataclass
+class HookContext:
+    project_dir: Path
+    build_dir: Path
+    platform: Platform

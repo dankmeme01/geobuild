@@ -10,7 +10,9 @@ Besides just making it simpler to write build configuration, Geobuild has some o
 
 * Reduced CMakeLists.txt clutter
 * Automatic checking for updates of Geode/CMake dependencies (disabled by default)
-* Ability to generate the mod.json from a template and add custom things to it
+* Ability to generate the mod.json from a template and add custom things to it dynamically
+* Post-build hooks
+* ADB management, e.g. automatically installing a mod via ADB and launching the game after build
 * Allow you to run *whatever you want*. Whether it is generating some build configuration files, downloading binaries, this is not CMake so you are only limited by your imagination and PyPI :)
 
 ## Usage
