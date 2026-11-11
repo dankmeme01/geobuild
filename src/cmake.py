@@ -3,6 +3,8 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
+import shlex
+import sys
 
 from .config import Config
 
@@ -134,6 +136,8 @@ class CMakeFile:
     link_options: list[CMakeLinkOption]       = field(default_factory=list)
 
     unity_opts: CMakeUnityOptions | None = None
+
+    enable_hooks: bool = False
 
     # def __init__(self, path: Path) -> None:
     #     self.path = path
@@ -312,6 +316,21 @@ class CMakeFile:
                 name = lib.name
 
             out += f"target_link_libraries({get_target(lib.target)} {lib.privacy.name} {name})\n"
+
+        # Hooks
+        if self.enable_hooks:
+            post_build_name = f"{self.config.project_name}_POST_BUILD"
+            cmd = shlex.join([
+                sys.executable,
+                "-m",
+                "geobuild._hook_runner",
+                "post_build",
+                str(self.config.project_dir)
+            ])
+            geobuild_root = Path(__file__).parent.parent
+            dir = self.convert_path(geobuild_root)
+            out += "\n# Hooks\n"
+            out += f"add_custom_target({post_build_name} ALL COMMAND {cmd} WORKING_DIRECTORY ${{CMAKE_BINARY_DIR}} DEPENDS {self.config.project_name}_PACKAGE USES_TERMINAL)"
 
         # Raw statements
         out += "\n# Raw statements\n"

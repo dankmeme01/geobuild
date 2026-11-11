@@ -21,7 +21,7 @@ class Build:
         self.checked_updates = False
         self.mod_json = None
         self.config = Config()
-        self._cmake = CMakeFile(self.config)
+        self._cmake = CMakeFile(config=self.config)
 
     def _to_path(self, p: Path | str) -> Path:
         if not isinstance(p, Path):
@@ -231,6 +231,10 @@ class Build:
             msg += f"Current Geode version: {self.config.get_sdk_version()} (tag: {self.config.get_sdk_commit_or_tag() or 'unknown'})\n"
 
             fatal_error(msg)
+
+    def enable_hooks(self):
+        """Enables hooks, such as the post-build hook via `def post_build()`"""
+        self._cmake.enable_hooks = True
 
     def finalize(self):
         if self.finalized:
